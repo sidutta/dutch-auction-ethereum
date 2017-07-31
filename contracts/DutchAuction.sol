@@ -53,16 +53,22 @@ contract DutchAuction {
     AuctionStarted();
   }
 
+  // Get current price of the item(denoted by some decreasing function)
   function getCurrentItemPrice() public atStage(Stages.StageAcceptingBids) returns (uint)
   {
     return startPrice - priceDecreaseRate*(block.number - startBlock);
   }
 
+  // Anyone can bid by sending the quantity and enough coins during bidding period
   function bid(uint quantity) public payable atStage(Stages.StageAcceptingBids) {
     uint currentPrice = getCurrentItemPrice();
+    // throw if we have run out of items to sell
     require(itemsToAuction > totalItemsSold);
+    // throw if not enough coins have been received for requested number of items
     require(currentPrice * (quantity + itemsPurchased[msg.sender]) <= amountTransferred[msg.sender] + msg.value); 
 
+    // If all items couldn't be sold by bidding period, abort the auction and let everyone
+    // withdraw back the coins they deposited 
     if(currentPrice<reservePrice) {
       finalPrice = 0;
       stage = Stages.StageAuctionEnded;
@@ -70,6 +76,8 @@ contract DutchAuction {
     }
     else {
       uint itemsToSell = quantity;
+      // If items requested is greater than number of items remaning to sell,
+      // decrease items requested to items remaning
       if(totalItemsSold + itemsToSell >= itemsToAuction) {
         itemsToSell = itemsToAuction - totalItemsSold;
         finalPrice = currentPrice;
@@ -82,6 +90,7 @@ contract DutchAuction {
     }
   }
 
+  // Bid organizer gets first chance to withdraw coins for items sold
   function transferEarningsToOrganizer() public isOrganizer atStage(Stages.StageBidFinished) returns (bool success) {
     uint earnings = totalItemsSold * finalPrice;
     if(earnings > 0) {
@@ -90,10 +99,12 @@ contract DutchAuction {
         AuctionEnded(finalPrice);
       	return true;
       }
+      else throw;
     }
     return false;
   }
 
+  // Bidders get to withdraw extra coins leftover due to their over-payments
   function withdrawExtraCoins() public atStage(Stages.StageAuctionEnded) returns (uint amountReturned) {
     uint totalAmountTransferred = amountTransferred[msg.sender];
     uint extra = totalAmountTransferred - finalPrice * itemsPurchased[msg.sender];
