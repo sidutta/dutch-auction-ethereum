@@ -14,6 +14,7 @@ This project implements the Dutch Auction mechanism to enable sales of tokens/ i
 
 ## Run Tests
 
+* Execute `testrpc` in one tab
 * `truffle test`
 
 ## Relevant files
