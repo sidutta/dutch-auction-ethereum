@@ -1,6 +1,6 @@
 # Dutch Auction
 
-This project implements the DUtch Auction mechanism to enable sales of tokens/ items. 
+This project implements the Dutch Auction mechanism to enable sales of tokens/ items. 
 
 ## Dependencies
 
