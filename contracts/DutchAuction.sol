@@ -18,10 +18,10 @@ contract DutchAuction {
   event AuctionEnded(uint finalPrice);
 
   enum Stages {
-    StageInitialized,
-    StageAcceptingBids,
-    StageBidFinished,
-    StageAuctionEnded
+    StageInitialized,    // Seller has constructed the contract
+    StageAcceptingBids,  // Buyers can start bidding
+    StageBidFinished,    // Bidding period over(cost has dropped below reserve price) or all items sold
+    StageAuctionEnded    // Buyers can claim back extra coins sent 
   }
 
   modifier atStage(Stages _stage) {
@@ -69,15 +69,15 @@ contract DutchAuction {
 
     // If all items couldn't be sold by bidding period, abort the auction and let everyone
     // withdraw back the coins they deposited 
-    if(currentPrice<reservePrice) {
+    if(currentPrice < reservePrice) {
       finalPrice = 0;
       stage = Stages.StageAuctionEnded;
       AuctionEnded(0);
     }
     else {
       uint itemsToSell = quantity;
-      // If items requested is greater than number of items remaning to sell,
-      // decrease items requested to items remaning
+      // If items requested is greater than number of items remaining to sell,
+      // decrease items requested to items remaining and end bidding state
       if(totalItemsSold + itemsToSell >= itemsToAuction) {
         itemsToSell = itemsToAuction - totalItemsSold;
         finalPrice = currentPrice;
@@ -85,9 +85,9 @@ contract DutchAuction {
       }
       totalItemsSold = totalItemsSold + itemsToSell;
       itemsPurchased[msg.sender] = itemsPurchased[msg.sender] + itemsToSell;
-      amountTransferred[msg.sender] = amountTransferred[msg.sender] + msg.value;
-      BidReceived(msg.sender, quantity);
     }
+    amountTransferred[msg.sender] = amountTransferred[msg.sender] + msg.value;
+    BidReceived(msg.sender, quantity);
   }
 
   // Bid organizer gets first chance to withdraw coins for items sold
@@ -99,7 +99,7 @@ contract DutchAuction {
         AuctionEnded(finalPrice);
       	return true;
       }
-      else throw;
+      else revert();
     }
     return false;
   }
@@ -119,5 +119,10 @@ contract DutchAuction {
       }
     }
     return 0;
+  }
+
+  // Buyers claim the tokens/ items they were bidding for
+  function claimItems() public atStage(Stages.StageAuctionEnded) {
+    // To be implemented based on item/ token on a case-by-case basis
   }
 }

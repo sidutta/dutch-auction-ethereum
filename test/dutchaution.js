@@ -185,6 +185,26 @@ contract('DutchAuction', function(accounts) {
     });  
   });
 
+  it("bid() should fail after all items have been sold", function() {
+    return DutchAuction.deployed()
+    .then(function(instance) {
+      return instance.bid(100, { from: accounts[5], value: 100 })
+      .then(function() {
+        console.log("Error: bid() should fail after all items have been sold");
+      })
+      .catch(function() {
+        return instance.itemsPurchased.call(accounts[5])
+        .then(function(items) {
+          assert.equal(items, 0, "bid() should fail after all items have been sold and itemsPurchased == 0");
+          return instance.amountTransferred.call(accounts[5])
+        })
+        .then(function(amountTransferred) {
+          assert.equal(amountTransferred, 0, "bid() should fail after all items have been sold and amountTransferred == 0");
+        });
+      });
+    });  
+  });
+
   it("stage should be Stages.StageBidFinished after items exhausted", function() {
     return DutchAuction.deployed()
     .then(function(instance) {
@@ -226,6 +246,26 @@ contract('DutchAuction', function(accounts) {
       })
       .then(function(stage) {
         assert.equal(stage, 3, "organizer's call to transferEarningsToOrganizer() should set stage=Stages.StageAuctionEnded");
+      });
+    });  
+  });
+
+  it("bid() should fail after auction period has ended", function() {
+    return DutchAuction.deployed()
+    .then(function(instance) {
+      return instance.bid(100, { from: accounts[4], value: 100 })
+      .then(function() {
+        console.log("Error: bid() should fail after auction period has ended");
+      })
+      .catch(function() {
+        return instance.itemsPurchased.call(accounts[4])
+        .then(function(items) {
+          assert.equal(items, 0, "bid() should fail after auction period has ended and itemsPurchased == 0");
+          return instance.amountTransferred.call(accounts[4])
+        })
+        .then(function(amountTransferred) {
+          assert.equal(amountTransferred, 0, "bid() should fail after auction period has ended and amountTransferred == 0");
+        });
       });
     });  
   });
