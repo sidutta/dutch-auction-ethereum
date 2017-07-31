@@ -15,12 +15,13 @@ contract DutchAuction {
 
   event AuctionStarted();
   event BidReceived(address _from, uint quantity);
-  event AuctionEnded(uint finalPrice);
+  event AuctionEnded(uint _finalPrice);
 
   enum Stages {
     StageInitialized,    // Seller has constructed the contract
     StageAcceptingBids,  // Buyers can start bidding
-    StageBidFinished,    // Bidding period over(cost has dropped below reserve price) or all items sold
+    StageBidFinished,    // Bidding period over(cost has dropped below 
+                         // reserve price) or all items sold
     StageAuctionEnded    // Buyers can claim back extra coins sent 
   }
 
@@ -35,7 +36,8 @@ contract DutchAuction {
   }
 
   // Constructor
-  function DutchAuction(uint _itemsToAuction, uint _reservePrice, uint _startPrice, uint _priceDecreaseRate) public { 
+  function DutchAuction(uint _itemsToAuction, uint _reservePrice, 
+      uint _startPrice, uint _priceDecreaseRate) public { 
     organizer = msg.sender;     
     itemsToAuction = _itemsToAuction;
     totalItemsSold = 0;
@@ -65,7 +67,8 @@ contract DutchAuction {
     // throw if we have run out of items to sell
     require(itemsToAuction > totalItemsSold);
     // throw if not enough coins have been received for requested number of items
-    require(currentPrice * (quantity + itemsPurchased[msg.sender]) <= amountTransferred[msg.sender] + msg.value); 
+    require(currentPrice * (quantity + itemsPurchased[msg.sender]) <= 
+        amountTransferred[msg.sender] + msg.value); 
 
     // If all items couldn't be sold by bidding period, abort the auction and let everyone
     // withdraw back the coins they deposited 
@@ -91,7 +94,8 @@ contract DutchAuction {
   }
 
   // Bid organizer gets first chance to withdraw coins for items sold
-  function transferEarningsToOrganizer() public isOrganizer atStage(Stages.StageBidFinished) returns (bool success) {
+  function transferEarningsToOrganizer() public isOrganizer 
+      atStage(Stages.StageBidFinished) returns (bool success) {
     uint earnings = totalItemsSold * finalPrice;
     if(earnings > 0) {
       if(organizer.send(earnings)) {
@@ -105,7 +109,8 @@ contract DutchAuction {
   }
 
   // Bidders get to withdraw extra coins leftover due to their over-payments
-  function withdrawExtraCoins() public atStage(Stages.StageAuctionEnded) returns (uint amountReturned) {
+  function withdrawExtraCoins() public atStage(Stages.StageAuctionEnded) 
+      returns (uint amountReturned) {
     uint totalAmountTransferred = amountTransferred[msg.sender];
     uint extra = totalAmountTransferred - finalPrice * itemsPurchased[msg.sender];
     if(extra > 0) {
